@@ -1,5 +1,5 @@
 // Initial Commit
-//   Katie, Kelly, Colline
+//   Katie, Kelly, Colin
 
 #include "UnoJoy.h"
 
