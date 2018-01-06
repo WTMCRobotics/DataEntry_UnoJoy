@@ -4,8 +4,11 @@
 #include "UnoJoy.h"
 
 int pinButtons[] = {9,8,7,6,5,4,3,2};
+int pinID[]     = {12,11,10};
 
 #define DEBOUNCE_TIME 10
+
+byte  btID;
 byte  btRawBTNS;          // actual state of buttons
 byte  btDebounceTimer[8]; // debounce timer for buttons
 byte  btBTNS;             // debounced state of buttons
@@ -16,9 +19,15 @@ byte  btBTNS;             // debounced state of buttons
 void setup() 
 {
   for (int i=0; i<8; i++)
-  {
     pinMode(pinButtons[i], INPUT_PULLUP);
-  }
+
+  for (int i=0; i<3; i++)
+    pinMode(pinID[i], INPUT_PULLUP);
+
+  btID = digitalRead(pinID[0]) << 0 |
+         digitalRead(pinID[1]) << 1 |
+         digitalRead(pinID[2]) << 2;
+        
     
   Serial.begin(115200);
   Serial.println("Hello World");
@@ -32,9 +41,11 @@ void loop()
 {
   ScanIO();
   DebounceButtons();
-  Serial.print(btRawBTNS, HEX);
-  Serial.print(" ");
-  Serial.println(btBTNS, HEX);
+//  Serial.print(btRawBTNS, HEX);
+  Serial.print("0x");
+  if (btBTNS < 0x10)
+    Serial.print("0");
+  Serial.print(btBTNS, HEX);
   UpdateUnoJoy();
 
   delay(500);
@@ -131,8 +142,8 @@ void UpdateUnoJoy()
 {
     // Always be getting fresh data
   dataForController_t controllerData = getControllerData();
-  setControllerData(controllerData);
- Serial.println(btBTNS, HEX);
+//  setControllerData(controllerData);
+//  Serial.println(btBTNS, HEX);
   printControllerData(controllerData);
 }  
 
@@ -148,17 +159,19 @@ dataForController_t getControllerData(void)
   // Since our buttons are all held high and
   //  pulled low when pressed, we use the "!"
   //  operator to invert the readings from the pins
-  controllerData.triangleOn  = btBTNS & 1;
-  controllerData.circleOn    = btBTNS & 2;
-  controllerData.squareOn    = btBTNS & 4;
-  controllerData.crossOn     = btBTNS & 8;
-  controllerData.dpadUpOn    = btBTNS & 16;
-  controllerData.dpadDownOn  = btBTNS & 32;
-  controllerData.dpadLeftOn  = btBTNS & 64;
-  controllerData.dpadRightOn = btBTNS & 128;
-  //controllerData.l1On = !digitalRead(10);
-  //controllerData.r1On = !digitalRead(11);
-  //controllerData.selectOn = !digitalRead(12);
+  controllerData.triangleOn   = (btBTNS & 0x01) ? 1 : 0;
+  controllerData.circleOn     = (btBTNS & 0x02) ? 1 : 0;
+  controllerData.squareOn     = (btBTNS & 0x04) ? 1 : 0;
+  controllerData.crossOn      = (btBTNS & 0x08) ? 1 : 0;
+  controllerData.dpadUpOn     = (btBTNS & 0x10) ? 1 : 0;
+  controllerData.dpadDownOn   = (btBTNS & 0x20) ? 1 : 0;
+  controllerData.dpadLeftOn   = (btBTNS & 0x40) ? 1 : 0;
+  controllerData.dpadRightOn  = (btBTNS & 0x80) ? 1 : 0;
+  
+  controllerData.l1On         = !digitalRead(pinID[0]);
+  controllerData.r1On         = !digitalRead(pinID[1]);
+  controllerData.selectOn     = !digitalRead(pinID[2]);
+  
   //controllerData.startOn = !digitalRead(A4);
   //controllerData.homeOn = !digitalRead(A5);
   
@@ -177,20 +190,25 @@ dataForController_t getControllerData(void)
 
 void printControllerData(dataForController_t controllerData)
 {
-  Serial.print("Triangle  : ");
-  Serial.println(controllerData.triangleOn);
-  Serial.print("Circle    : ");
-  Serial.println(controllerData.circleOn);
-  Serial.print("Square    : ");
-  Serial.println(controllerData.squareOn);
-  Serial.print("Cross     : ");
-  Serial.println(controllerData.crossOn);
-  Serial.print("PadUp     : ");
-  Serial.println(controllerData.dpadUpOn);
-  Serial.print("PadDown   : ");
-  Serial.println(controllerData.dpadDownOn);
-  Serial.print("Pad Left  : ");
-  Serial.println(controllerData.dpadLeftOn);
-  Serial.print("Pad Right : ");
+  byte btID = (controllerData.l1On << 0) +
+              (controllerData.r1On << 1) +
+              (controllerData.selectOn << 2);
+  Serial.print(" ID:");
+  Serial.print(btID, HEX);
+  Serial.print(" T:");
+  Serial.print(controllerData.triangleOn);
+  Serial.print(" C-");
+  Serial.print(controllerData.circleOn);
+  Serial.print(" S-");
+  Serial.print(controllerData.squareOn);
+  Serial.print(" C-");
+  Serial.print(controllerData.crossOn);
+  Serial.print(" U-");
+  Serial.print(controllerData.dpadUpOn);
+  Serial.print(" D-");
+  Serial.print(controllerData.dpadDownOn);
+  Serial.print(" L-");
+  Serial.print(controllerData.dpadLeftOn);
+  Serial.print(" R-");
   Serial.println(controllerData.dpadRightOn);
  }  
