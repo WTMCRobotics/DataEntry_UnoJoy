@@ -48,7 +48,7 @@ void loop()
   Serial.print(btBTNS, HEX);
   UpdateUnoJoy();
 
-  delay(500);
+ // delay(500);
 }
 
 
